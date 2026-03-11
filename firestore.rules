@@ -1,0 +1,210 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: usuarios
+    // Document ID: {uid}
+    // Fields:
+    //   - nome: string
+    //   - email: string
+    //   - criadoEm: timestamp
+    //
+    // Collection: empresas
+    // Document ID: {empresaId}
+    // Fields:
+    //   - nome: string
+    //   - proprietarioId: string
+    //   - criadoEm: timestamp
+    //
+    // Collection: empresas/{empresaId}/membros
+    // Document ID: {uid}
+    // Fields:
+    //   - role: string ('admin', 'contador', 'usuario')
+    //
+    // Collection: empresas/{empresaId}/contas
+    // Document ID: {contaId}
+    // Fields:
+    //   - codigo: string
+    //   - nome: string
+    //   - tipo: string ('ativo', 'passivo', 'receita', 'despesa')
+    //   - natureza: string ('devedora', 'credora')
+    //
+    // Collection: empresas/{empresaId}/lancamentos
+    // Document ID: {lancamentoId}
+    // Fields:
+    //   - data: timestamp
+    //   - descricao: string
+    //   - contaDebito: string
+    //   - contaCredito: string
+    //   - valor: number
+    //   - criadoEm: timestamp
+    //   - criadoPor: string
+    //
+    // Collection: empresas/{empresaId}/periodos
+    // Document ID: {periodoId}
+    // Fields:
+    //   - mes: number
+    //   - ano: number
+    //   - status: string ('aberto', 'fechado')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isCompanyOwnerResource() {
+      return isAuthenticated() && resource.data.proprietarioId == request.auth.uid;
+    }
+
+    function isCompanyOwnerGet(empresaId) {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/empresas/$(empresaId)).data.proprietarioId == request.auth.uid;
+    }
+
+    function isCompanyMember(empresaId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/empresas/$(empresaId)/membros/$(request.auth.uid));
+    }
+
+    function hasCompanyAccessResource(empresaId) {
+      return isCompanyOwnerResource() || isCompanyMember(empresaId);
+    }
+
+    function hasCompanyAccessGet(empresaId) {
+      return isCompanyOwnerGet(empresaId) || isCompanyMember(empresaId);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUsuario() {
+      return hasOnlyAllowedFields(['nome', 'email', 'criadoEm']) &&
+             hasRequiredFields(['nome', 'email']) &&
+             request.resource.data.nome is string && request.resource.data.nome.size() > 0 && request.resource.data.nome.size() < 100 &&
+             isValidEmail(request.resource.data.email) &&
+             (request.resource.data.criadoEm is timestamp || !('criadoEm' in request.resource.data));
+    }
+
+    function isValidEmpresa() {
+      return hasOnlyAllowedFields(['nome', 'proprietarioId', 'criadoEm']) &&
+             hasRequiredFields(['nome', 'proprietarioId']) &&
+             request.resource.data.nome is string && request.resource.data.nome.size() > 0 && request.resource.data.nome.size() < 100 &&
+             request.resource.data.proprietarioId == request.auth.uid &&
+             (request.resource.data.criadoEm is timestamp || !('criadoEm' in request.resource.data));
+    }
+
+    function isValidMembro() {
+      return hasOnlyAllowedFields(['role']) &&
+             hasRequiredFields(['role']) &&
+             request.resource.data.role in ['admin', 'contador', 'usuario'];
+    }
+
+    function isValidConta() {
+      return hasOnlyAllowedFields(['codigo', 'nome', 'tipo', 'natureza']) &&
+             hasRequiredFields(['codigo', 'nome', 'tipo', 'natureza']) &&
+             request.resource.data.codigo is string && request.resource.data.codigo.size() > 0 && request.resource.data.codigo.size() < 20 &&
+             request.resource.data.nome is string && request.resource.data.nome.size() > 0 && request.resource.data.nome.size() < 100 &&
+             request.resource.data.tipo in ['ativo', 'passivo', 'receita', 'despesa'] &&
+             request.resource.data.natureza in ['devedora', 'credora'];
+    }
+
+    function isValidLancamento() {
+      return hasOnlyAllowedFields(['data', 'descricao', 'contaDebito', 'contaCredito', 'valor', 'criadoEm', 'criadoPor']) &&
+             hasRequiredFields(['data', 'descricao', 'contaDebito', 'contaCredito', 'valor', 'criadoPor']) &&
+             request.resource.data.data is timestamp &&
+             request.resource.data.descricao is string && request.resource.data.descricao.size() > 0 && request.resource.data.descricao.size() < 500 &&
+             request.resource.data.contaDebito is string && request.resource.data.contaDebito.size() > 0 && request.resource.data.contaDebito.size() < 50 &&
+             request.resource.data.contaCredito is string && request.resource.data.contaCredito.size() > 0 && request.resource.data.contaCredito.size() < 50 &&
+             request.resource.data.valor is number && request.resource.data.valor > 0 &&
+             request.resource.data.criadoPor == request.auth.uid &&
+             (request.resource.data.criadoEm is timestamp || !('criadoEm' in request.resource.data));
+    }
+
+    function isValidPeriodo() {
+      return hasOnlyAllowedFields(['mes', 'ano', 'status']) &&
+             hasRequiredFields(['mes', 'ano', 'status']) &&
+             request.resource.data.mes is number && request.resource.data.mes >= 1 && request.resource.data.mes <= 12 &&
+             request.resource.data.ano is number && request.resource.data.ano >= 2000 && request.resource.data.ano <= 2100 &&
+             request.resource.data.status in ['aberto', 'fechado'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /usuarios/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUsuario();
+      allow update: if isOwner(uid) && isValidUsuario() && 
+                    (!('criadoEm' in request.resource.data) || request.resource.data.criadoEm == resource.data.criadoEm);
+      allow delete: if false; // Users shouldn't be deleted directly from client
+    }
+
+    match /empresas/{empresaId} {
+      allow read: if hasCompanyAccessResource(empresaId);
+      allow create: if isAuthenticated() && isValidEmpresa();
+      allow update: if isCompanyOwnerResource() && isValidEmpresa() &&
+                    (!('proprietarioId' in request.resource.data) || request.resource.data.proprietarioId == resource.data.proprietarioId) &&
+                    (!('criadoEm' in request.resource.data) || request.resource.data.criadoEm == resource.data.criadoEm);
+      allow delete: if isCompanyOwnerResource();
+
+      match /membros/{uid} {
+        allow read: if hasCompanyAccessGet(empresaId);
+        allow create: if isCompanyOwnerGet(empresaId) && isValidMembro();
+        allow update: if isCompanyOwnerGet(empresaId) && isValidMembro();
+        allow delete: if isCompanyOwnerGet(empresaId) || isOwner(uid); // Owner can remove, or user can leave
+      }
+
+      match /contas/{contaId} {
+        allow read: if hasCompanyAccessGet(empresaId);
+        allow create: if hasCompanyAccessGet(empresaId) && isValidConta();
+        allow update: if hasCompanyAccessGet(empresaId) && isValidConta();
+        allow delete: if hasCompanyAccessGet(empresaId);
+      }
+
+      match /lancamentos/{lancamentoId} {
+        allow read: if hasCompanyAccessGet(empresaId);
+        allow create: if hasCompanyAccessGet(empresaId) && isValidLancamento();
+        allow update: if hasCompanyAccessGet(empresaId) && isValidLancamento() &&
+                      (!('criadoPor' in request.resource.data) || request.resource.data.criadoPor == resource.data.criadoPor) &&
+                      (!('criadoEm' in request.resource.data) || request.resource.data.criadoEm == resource.data.criadoEm);
+        allow delete: if hasCompanyAccessGet(empresaId);
+      }
+
+      match /periodos/{periodoId} {
+        allow read: if hasCompanyAccessGet(empresaId);
+        allow create: if hasCompanyAccessGet(empresaId) && isValidPeriodo();
+        allow update: if hasCompanyAccessGet(empresaId) && isValidPeriodo();
+        allow delete: if hasCompanyAccessGet(empresaId);
+      }
+    }
+  }
+}

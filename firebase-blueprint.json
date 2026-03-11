@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "Usuario": {
+      "title": "Usuário",
+      "description": "Perfil do usuário",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "email": { "type": "string" },
+        "criadoEm": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Empresa": {
+      "title": "Empresa",
+      "description": "Dados da empresa",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "proprietarioId": { "type": "string" },
+        "criadoEm": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Membro": {
+      "title": "Membro",
+      "description": "Membro da empresa",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin", "contador", "usuario"] }
+      }
+    },
+    "Conta": {
+      "title": "Conta",
+      "description": "Conta contábil",
+      "type": "object",
+      "properties": {
+        "codigo": { "type": "string" },
+        "nome": { "type": "string" },
+        "tipo": { "type": "string", "enum": ["ativo", "passivo", "receita", "despesa"] },
+        "natureza": { "type": "string", "enum": ["devedora", "credora"] }
+      }
+    },
+    "Lancamento": {
+      "title": "Lançamento",
+      "description": "Lançamento contábil",
+      "type": "object",
+      "properties": {
+        "data": { "type": "string", "format": "date-time" },
+        "descricao": { "type": "string" },
+        "contaDebito": { "type": "string" },
+        "contaCredito": { "type": "string" },
+        "valor": { "type": "number" },
+        "criadoEm": { "type": "string", "format": "date-time" },
+        "criadoPor": { "type": "string" }
+      }
+    },
+    "Periodo": {
+      "title": "Período",
+      "description": "Período contábil",
+      "type": "object",
+      "properties": {
+        "mes": { "type": "number" },
+        "ano": { "type": "number" },
+        "status": { "type": "string", "enum": ["aberto", "fechado"] }
+      }
+    }
+  },
+  "firestore": {
+    "/usuarios/{uid}": {
+      "schema": { "$ref": "#/entities/Usuario" },
+      "description": "Perfis de usuários"
+    },
+    "/empresas/{empresaId}": {
+      "schema": { "$ref": "#/entities/Empresa" },
+      "description": "Empresas do sistema"
+    },
+    "/empresas/{empresaId}/membros/{uid}": {
+      "schema": { "$ref": "#/entities/Membro" },
+      "description": "Membros da empresa"
+    },
+    "/empresas/{empresaId}/contas/{contaId}": {
+      "schema": { "$ref": "#/entities/Conta" },
+      "description": "Plano de contas da empresa"
+    },
+    "/empresas/{empresaId}/lancamentos/{lancamentoId}": {
+      "schema": { "$ref": "#/entities/Lancamento" },
+      "description": "Lançamentos contábeis da empresa"
+    },
+    "/empresas/{empresaId}/periodos/{periodoId}": {
+      "schema": { "$ref": "#/entities/Periodo" },
+      "description": "Períodos contábeis da empresa"
+    }
+  }
+}

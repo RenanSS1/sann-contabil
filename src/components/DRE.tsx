@@ -1,5 +1,6 @@
 import { Entry, Account } from '../types';
 import { calculateAccountBalance, formatCurrency } from '../utils/accounting';
+import { ReportAd } from './ads/ReportAd';
 
 interface DREProps {
   entries: Entry[];
@@ -86,6 +87,9 @@ export function DRE({ entries, accounts }: DREProps) {
           <p className={`text-sm mt-1 ${resultadoExercicio >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
             {resultadoExercicio >= 0 ? 'Lucro Líquido' : 'Prejuízo Líquido'}
           </p>
+        </div>
+        <div className="mt-8">
+          <ReportAd />
         </div>
       </div>
     </div>

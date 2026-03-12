@@ -1,14 +1,18 @@
 import { Edit2, Trash2, History } from 'lucide-react';
 import { Entry, Account } from '../types';
 import { formatCurrency, formatDate } from '../utils';
+import { ListAd } from './ads/ListAd';
+import { shouldShowAds } from '../utils/adsenseUtils';
+import React from 'react';
 
 interface EntriesTableProps {
   entries: Entry[];
   accounts: Account[];
   onDelete: (id: string) => void;
+  userProfile: any;
 }
 
-export function EntriesTable({ entries, accounts, onDelete }: EntriesTableProps) {
+export function EntriesTable({ entries, accounts, onDelete, userProfile }: EntriesTableProps) {
   const getAccountName = (id: string) => {
     const account = accounts.find(a => a.id === id);
     return account ? account.nome : 'Desconhecida';
@@ -43,35 +47,44 @@ export function EntriesTable({ entries, accounts, onDelete }: EntriesTableProps)
                 </td>
               </tr>
             ) : (
-              entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50/50 transition-colors group">
-                  <td className="py-4 px-6 text-sm text-gray-600 whitespace-nowrap">
-                    {formatDate(entry.data)}
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                    {entry.contaDebitoInfo?.nome || getAccountName(entry.contaDebito)}
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                    {entry.contaCreditoInfo?.nome || getAccountName(entry.contaCredito)}
-                  </td>
-                  <td className="py-4 px-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
-                    {formatCurrency(entry.valor)}
-                  </td>
-                  <td className="py-4 px-6 text-sm text-gray-500 max-w-xs truncate">
-                    {entry.descricao}
-                  </td>
-                  <td className="py-4 px-6 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => onDelete(entry.id)}
-                        className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors"
-                        title="Excluir lançamento"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+              entries.map((entry, index) => (
+                <React.Fragment key={entry.id}>
+                  <tr className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="py-4 px-6 text-sm text-gray-600 whitespace-nowrap">
+                      {formatDate(entry.data)}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                      {entry.contaDebitoInfo?.nome || getAccountName(entry.contaDebito)}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                      {entry.contaCreditoInfo?.nome || getAccountName(entry.contaCredito)}
+                    </td>
+                    <td className="py-4 px-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
+                      {formatCurrency(entry.valor)}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-gray-500 max-w-xs truncate">
+                      {entry.descricao}
+                    </td>
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => onDelete(entry.id)}
+                          className="text-red-500 hover:text-red-700 p-1 rounded-md hover:bg-red-50 transition-colors"
+                          title="Excluir lançamento"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {(index + 1) % 20 === 0 && shouldShowAds(userProfile) && (
+                    <tr>
+                      <td colSpan={6} className="py-4 px-6 bg-gray-50">
+                        <ListAd />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))
             )}
           </tbody>

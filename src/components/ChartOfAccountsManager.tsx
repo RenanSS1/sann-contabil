@@ -5,6 +5,7 @@ import { ChartOfAccounts, Account } from '../types';
 import { Book, Plus, Trash2, ChevronRight, CheckCircle2, Edit2, Eye, Star, X } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../utils/errorHandling';
 import { AccountsTreeEditor } from './AccountsTreeEditor';
+import { SidebarAd } from './ads/SidebarAd';
 import { 
   seedUserChartsOfAccounts, 
   createChartOfAccounts, 
@@ -232,6 +233,10 @@ export function ChartOfAccountsManager({ userId }: { userId: string }) {
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <SidebarAd />
       </div>
 
       {/* Chart Modal */}

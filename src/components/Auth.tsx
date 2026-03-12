@@ -7,6 +7,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../firebase';
 import { LogIn, UserPlus, Mail, Lock } from 'lucide-react';
+import { LoginAd } from './ads/LoginAd';
 
 export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -146,6 +147,8 @@ export function Auth() {
               </button>
             </div>
           </form>
+
+          <LoginAd />
 
           <div className="mt-6">
             <div className="relative">

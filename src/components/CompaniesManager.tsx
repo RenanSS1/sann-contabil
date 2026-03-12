@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '../utils/errorHandling';
 import { createCompany, updateCompany, deleteCompany, seedUserChartsOfAccounts } from '../services/financeService';
+import { SidebarAd } from './ads/SidebarAd';
 
 interface CompaniesManagerProps {
   userId: string;
@@ -261,6 +262,10 @@ export function CompaniesManager({ userId, onSelectCompany, activeCompanyId }: C
           ))}
         </div>
       )}
+
+      <div className="mt-8">
+        <SidebarAd />
+      </div>
 
       {/* Modal */}
       {isModalOpen && (

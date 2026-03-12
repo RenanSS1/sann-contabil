@@ -1,5 +1,6 @@
 import { Entry, Account } from '../types';
 import { calculateAccountBalance, formatCurrency } from '../utils/accounting';
+import { ReportAd } from './ads/ReportAd';
 
 interface BalancoPatrimonialProps {
   entries: Entry[];
@@ -113,6 +114,9 @@ export function BalancoPatrimonial({ entries, accounts }: BalancoPatrimonialProp
         {Math.abs(totalAtivo - totalPassivoEPL) < 0.01 
           ? 'Balanço Fechado (Ativo = Passivo + PL)' 
           : `Diferença Encontrada: ${formatCurrency(Math.abs(totalAtivo - totalPassivoEPL))}`}
+      </div>
+      <div className="p-4">
+        <ReportAd />
       </div>
     </div>
   );

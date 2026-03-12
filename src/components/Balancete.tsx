@@ -1,6 +1,7 @@
 import { Entry, Account } from '../types';
 import { formatCurrency } from '../utils/accounting';
 import { Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { ReportAd } from './ads/ReportAd';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -128,6 +129,10 @@ export function Balancete({ entries, accounts }: BalanceteProps) {
             Exportar XLS
           </button>
         </div>
+      </div>
+
+      <div className="p-4 border-b border-gray-200">
+        <ReportAd />
       </div>
 
       <div className="overflow-x-auto">

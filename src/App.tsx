@@ -15,6 +15,8 @@ import { ChartOfAccountsManager } from './components/ChartOfAccountsManager';
 import { AccountsTreeEditor } from './components/AccountsTreeEditor';
 import { CompaniesManager } from './components/CompaniesManager';
 import { Onboarding } from './components/Onboarding';
+import { DashboardAd } from './components/ads/DashboardAd';
+import { shouldShowAds } from './utils/adsenseUtils';
 import { handleFirestoreError, OperationType } from './utils/errorHandling';
 import { updateSelectedCompany } from './services/financeService';
 
@@ -241,6 +243,12 @@ export default function App() {
               isClosed={false}
             />
 
+            {shouldShowAds(userProfile) && (
+              <div className="my-8">
+                <DashboardAd />
+              </div>
+            )}
+
             <EntryForm onSubmit={handleAddEntry} userId={user.uid} accounts={accounts} />
 
             {loading ? (
@@ -248,7 +256,7 @@ export default function App() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <EntriesTable entries={entries} accounts={accounts} onDelete={handleDeleteEntry} />
+              <EntriesTable entries={entries} accounts={accounts} onDelete={handleDeleteEntry} userProfile={userProfile} />
             )}
           </>
         )}

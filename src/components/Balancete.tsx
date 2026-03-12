@@ -21,7 +21,7 @@ export function Balancete({ entries, accounts }: BalanceteProps) {
     });
 
     let saldoAtual = 0;
-    if (acc.natureza === 'devedora') {
+    if (acc.natureza === 'Devedora') {
       saldoAtual = debitos - creditos;
     } else {
       saldoAtual = creditos - debitos;
@@ -140,6 +140,9 @@ export function Balancete({ entries, accounts }: BalanceteProps) {
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Conta
               </th>
+              <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Lançamento
+              </th>
               <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Débitos
               </th>
@@ -167,6 +170,17 @@ export function Balancete({ entries, accounts }: BalanceteProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {acc.nome}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    {acc.aceitaLancamento ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
+                        Analítica
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                        Sintética
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                     {formatCurrency(acc.debitos)}
                   </td>
@@ -179,7 +193,7 @@ export function Balancete({ entries, accounts }: BalanceteProps) {
                     {formatCurrency(acc.saldoAtual)}
                     {acc.saldoAtual !== 0 && (
                       <span className="text-xs text-gray-400 ml-1">
-                        {acc.natureza === 'devedora' ? (acc.saldoAtual > 0 ? 'D' : 'C') : (acc.saldoAtual > 0 ? 'C' : 'D')}
+                        {acc.natureza === 'Devedora' ? (acc.saldoAtual > 0 ? 'D' : 'C') : (acc.saldoAtual > 0 ? 'C' : 'D')}
                       </span>
                     )}
                   </td>
@@ -190,7 +204,7 @@ export function Balancete({ entries, accounts }: BalanceteProps) {
           {balanceteData.length > 0 && (
             <tfoot className="bg-gray-50 font-bold">
               <tr>
-                <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                   TOTAIS:
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">

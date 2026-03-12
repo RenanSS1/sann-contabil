@@ -7,8 +7,9 @@ interface BalancoPatrimonialProps {
 }
 
 export function BalancoPatrimonial({ entries, accounts }: BalancoPatrimonialProps) {
-  const ativos = accounts.filter(a => a.tipo === 'ativo');
-  const passivos = accounts.filter(a => a.tipo === 'passivo');
+  const ativos = accounts.filter(a => a.tipo === 'Ativo');
+  const passivos = accounts.filter(a => a.tipo === 'Passivo');
+  const pl = accounts.filter(a => a.tipo === 'PatrimonioLiquido');
 
   const ativosComSaldo = ativos.map(acc => ({
     ...acc,
@@ -20,18 +21,24 @@ export function BalancoPatrimonial({ entries, accounts }: BalancoPatrimonialProp
     saldo: calculateAccountBalance(acc.id, acc, entries)
   })).filter(acc => acc.saldo !== 0);
 
+  const plComSaldo = pl.map(acc => ({
+    ...acc,
+    saldo: calculateAccountBalance(acc.id, acc, entries)
+  })).filter(acc => acc.saldo !== 0);
+
   const totalAtivo = ativosComSaldo.reduce((acc, curr) => acc + curr.saldo, 0);
   const totalPassivo = passivosComSaldo.reduce((acc, curr) => acc + curr.saldo, 0);
+  const totalPL = plComSaldo.reduce((acc, curr) => acc + curr.saldo, 0);
 
   // Calculate Lucro/Prejuízo from DRE to add to Patrimônio Líquido
-  const receitas = accounts.filter(a => a.tipo === 'receita');
-  const despesas = accounts.filter(a => a.tipo === 'despesa');
+  const receitas = accounts.filter(a => a.tipo === 'Receita');
+  const despesas = accounts.filter(a => a.tipo === 'Despesa');
   
   const totalReceitas = receitas.reduce((acc, curr) => acc + calculateAccountBalance(curr.id, curr, entries), 0);
   const totalDespesas = despesas.reduce((acc, curr) => acc + calculateAccountBalance(curr.id, curr, entries), 0);
   
   const resultadoExercicio = totalReceitas - totalDespesas;
-  const totalPassivoEPL = totalPassivo + resultadoExercicio;
+  const totalPassivoEPL = totalPassivo + totalPL + resultadoExercicio;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -66,15 +73,23 @@ export function BalancoPatrimonial({ entries, accounts }: BalancoPatrimonialProp
         <div>
           <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 mb-4">Passivo e Patrimônio Líquido</h3>
           <div className="space-y-3">
-            {passivosComSaldo.length === 0 ? (
-              <p className="text-sm text-gray-500 italic">Nenhum saldo no passivo.</p>
+            {passivosComSaldo.length === 0 && plComSaldo.length === 0 ? (
+              <p className="text-sm text-gray-500 italic">Nenhum saldo no passivo ou PL.</p>
             ) : (
-              passivosComSaldo.map(acc => (
-                <div key={acc.id} className="flex justify-between text-sm">
-                  <span className="text-gray-700">{acc.codigo} - {acc.nome}</span>
-                  <span className="font-medium text-gray-900">{formatCurrency(acc.saldo)}</span>
-                </div>
-              ))
+              <>
+                {passivosComSaldo.map(acc => (
+                  <div key={acc.id} className="flex justify-between text-sm">
+                    <span className="text-gray-700">{acc.codigo} - {acc.nome}</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(acc.saldo)}</span>
+                  </div>
+                ))}
+                {plComSaldo.map(acc => (
+                  <div key={acc.id} className="flex justify-between text-sm">
+                    <span className="text-gray-700">{acc.codigo} - {acc.nome}</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(acc.saldo)}</span>
+                  </div>
+                ))}
+              </>
             )}
             
             <div className="pt-2 mt-2 border-t border-gray-100">

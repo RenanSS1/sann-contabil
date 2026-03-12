@@ -49,10 +49,10 @@ export function EntriesTable({ entries, accounts, onDelete }: EntriesTableProps)
                     {formatDate(entry.data)}
                   </td>
                   <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                    {getAccountName(entry.contaDebito)}
+                    {entry.contaDebitoInfo?.nome || getAccountName(entry.contaDebito)}
                   </td>
                   <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                    {getAccountName(entry.contaCredito)}
+                    {entry.contaCreditoInfo?.nome || getAccountName(entry.contaCredito)}
                   </td>
                   <td className="py-4 px-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
                     {formatCurrency(entry.valor)}

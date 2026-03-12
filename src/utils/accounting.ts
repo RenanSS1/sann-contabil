@@ -13,7 +13,7 @@ export function calculateAccountBalance(accountId: string, account: Account, ent
     }
   });
 
-  if (account.natureza === 'devedora') {
+  if (account.natureza === 'Devedora') {
     return totalDebit - totalCredit;
   } else {
     return totalCredit - totalDebit;

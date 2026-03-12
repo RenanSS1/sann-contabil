@@ -1,4 +1,4 @@
-import { Bell, Search, Settings, Building2 } from 'lucide-react';
+import { Bell, Settings, Building2 } from 'lucide-react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import { Company } from '../types';
@@ -45,6 +45,12 @@ export function Navbar({ user, companies, activeCompanyId, onSelectCompany, acti
 
             <div className="hidden sm:ml-10 sm:flex sm:space-x-8">
               <button
+                onClick={() => onTabChange('empresas')}
+                className={`${activeTab === 'empresas' ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                Empresas
+              </button>
+              <button
                 onClick={() => onTabChange('lancamentos')}
                 className={`${activeTab === 'lancamentos' ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
@@ -68,19 +74,15 @@ export function Navbar({ user, companies, activeCompanyId, onSelectCompany, acti
               >
                 Balancete
               </button>
+              <button
+                onClick={() => onTabChange('planos')}
+                className={`${activeTab === 'planos' ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                Modelos de Planos
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative hidden md:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
-                placeholder="Buscar lançamento..."
-              />
-            </div>
             <button className="p-2 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100 transition-colors">
               <Bell className="h-5 w-5" />
             </button>

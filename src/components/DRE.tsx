@@ -7,8 +7,8 @@ interface DREProps {
 }
 
 export function DRE({ entries, accounts }: DREProps) {
-  const receitas = accounts.filter(a => a.tipo === 'receita');
-  const despesas = accounts.filter(a => a.tipo === 'despesa');
+  const receitas = accounts.filter(a => a.tipo === 'Receita');
+  const despesas = accounts.filter(a => a.tipo === 'Despesa');
 
   const receitasComSaldo = receitas.map(acc => ({
     ...acc,

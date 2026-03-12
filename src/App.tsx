@@ -11,12 +11,18 @@ import { Auth } from './components/Auth';
 import { BalancoPatrimonial } from './components/BalancoPatrimonial';
 import { DRE } from './components/DRE';
 import { Balancete } from './components/Balancete';
+import { ChartOfAccountsManager } from './components/ChartOfAccountsManager';
+import { AccountsTreeEditor } from './components/AccountsTreeEditor';
+import { CompaniesManager } from './components/CompaniesManager';
+import { Onboarding } from './components/Onboarding';
 import { handleFirestoreError, OperationType } from './utils/errorHandling';
+import { updateSelectedCompany } from './services/financeService';
 
-export type TabType = 'lancamentos' | 'balanco' | 'dre' | 'balancete';
+export type TabType = 'empresas' | 'lancamentos' | 'balanco' | 'dre' | 'balancete' | 'planos';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [activeCompanyId, setActiveCompanyId] = useState<string>('');
@@ -33,59 +39,59 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch Companies
+  // Fetch User Profile and Companies
   useEffect(() => {
     if (!isAuthReady || !user) {
       setCompanies([]);
+      setUserProfile(null);
       setActiveCompanyId('');
       return;
     }
 
-    const q = query(collection(db, 'empresas'), where('proprietarioId', '==', user.uid));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (snapshot.empty) {
-        try {
-          const newCompRef = await addDoc(collection(db, 'empresas'), {
-            nome: 'Minha Empresa',
-            proprietarioId: user.uid,
-            criadoEm: serverTimestamp()
-          });
-          
-          // Only create user if it doesn't exist to avoid overwriting criadoEm
-          const userRef = doc(db, 'usuarios', user.uid);
-          setDoc(userRef, {
-            nome: user.displayName || 'Usuário',
-            email: user.email,
-            criadoEm: serverTimestamp()
-          }, { merge: true }).catch(e => {
-            // If it fails due to permissions (e.g. trying to update criadoEm), 
-            // it means the user already exists, which is fine.
-            console.log("User might already exist, skipping creation.");
-          });
-          
-        } catch (e) {
-          handleFirestoreError(e, OperationType.CREATE, 'empresas');
+    // Fetch User Profile
+    const userRef = doc(db, 'usuarios', user.uid);
+    const unsubscribeUser = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setUserProfile(data);
+        if (data.empresaSelecionadaId) {
+          setActiveCompanyId(data.empresaSelecionadaId);
         }
       } else {
-        const comps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Company[];
-        setCompanies(comps);
-        
-        // To prevent permission errors on subcollections due to optimistic updates,
-        // we only auto-select a company if it has been synced to the server.
-        const syncedComps = snapshot.docs.filter(d => !d.metadata.hasPendingWrites);
-        
-        if (!activeCompanyId || !comps.find(c => c.id === activeCompanyId)) {
-          if (syncedComps.length > 0) {
-            setActiveCompanyId(syncedComps[0].id);
-          }
-        }
+        // Create user profile if it doesn't exist
+        setDoc(userRef, {
+          nome: user.displayName || 'Usuário',
+          email: user.email,
+          criadoEm: serverTimestamp()
+        }, { merge: true });
       }
+    });
+
+    // Fetch Companies
+    const q = query(collection(db, 'empresas'), where('proprietarioId', '==', user.uid));
+    const unsubscribeCompanies = onSnapshot(q, (snapshot) => {
+      const comps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Company[];
+      setCompanies(comps);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'empresas');
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeUser();
+      unsubscribeCompanies();
+    };
   }, [user, isAuthReady]);
+
+  // Handle Company Selection
+  const handleSelectCompany = async (id: string) => {
+    if (!user) return;
+    try {
+      await updateSelectedCompany(user.uid, id);
+      setActiveCompanyId(id);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, 'usuarios');
+    }
+  };
 
   // Fetch Accounts and Entries for Active Company
   useEffect(() => {
@@ -99,32 +105,21 @@ export default function App() {
     setLoading(true);
 
     // Fetch Accounts
-    const accountsPath = `empresas/${activeCompanyId}/contas`;
+    const activeCompany = companies.find(c => c.id === activeCompanyId);
+    if (!activeCompany?.accountPlanId) {
+      setAccounts([]);
+      setLoading(false);
+      return;
+    }
+
+    const accountsPath = `planos_contas/${activeCompany.accountPlanId}/contas`;
     const accountsRef = collection(db, accountsPath);
-    const unsubscribeAccounts = onSnapshot(accountsRef, async (snapshot) => {
-      if (snapshot.empty) {
-        const defaultAccounts: Omit<Account, 'id'>[] = [
-          { codigo: '1.1.1.01', nome: 'Caixa Geral', tipo: 'ativo', natureza: 'devedora' },
-          { codigo: '1.1.1.02', nome: 'Bancos', tipo: 'ativo', natureza: 'devedora' },
-          { codigo: '1.1.2.01', nome: 'Clientes', tipo: 'ativo', natureza: 'devedora' },
-          { codigo: '2.1.1.01', nome: 'Fornecedores', tipo: 'passivo', natureza: 'credora' },
-          { codigo: '3.1.1.01', nome: 'Receita de Vendas', tipo: 'receita', natureza: 'credora' },
-          { codigo: '4.1.1.01', nome: 'Energia Elétrica', tipo: 'despesa', natureza: 'devedora' },
-        ];
-        try {
-          for (const acc of defaultAccounts) {
-            await addDoc(accountsRef, acc);
-          }
-        } catch (e) {
-          handleFirestoreError(e, OperationType.CREATE, accountsPath);
-        }
-      } else {
-        const accountsData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Account[];
-        setAccounts(accountsData);
-      }
+    const unsubscribeAccounts = onSnapshot(accountsRef, (snapshot) => {
+      const accountsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Account[];
+      setAccounts(accountsData);
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, accountsPath);
     });
@@ -190,6 +185,16 @@ export default function App() {
     return <Auth />;
   }
 
+  if (!activeCompanyId) {
+    return (
+      <Onboarding 
+        userId={user.uid} 
+        companies={companies} 
+        onSelectCompany={handleSelectCompany} 
+      />
+    );
+  }
+
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
@@ -208,12 +213,20 @@ export default function App() {
         user={user} 
         companies={companies} 
         activeCompanyId={activeCompanyId} 
-        onSelectCompany={setActiveCompanyId}
+        onSelectCompany={handleSelectCompany}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
       
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        {activeTab === 'empresas' && (
+          <CompaniesManager 
+            userId={user.uid} 
+            onSelectCompany={handleSelectCompany}
+            activeCompanyId={activeCompanyId}
+          />
+        )}
+
         {activeTab === 'lancamentos' && (
           <>
             <div className="mb-8">
@@ -250,6 +263,10 @@ export default function App() {
 
         {activeTab === 'balancete' && (
           <Balancete entries={entries} accounts={accounts} />
+        )}
+
+        {activeTab === 'planos' && (
+          <ChartOfAccountsManager userId={user.uid} />
         )}
       </main>
 

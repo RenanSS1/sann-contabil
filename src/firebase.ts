@@ -3,14 +3,19 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDfMYc-XEkisAwinEEbp31SzzLKyjdCwBU",
-  authDomain: "sann-contabil.firebaseapp.com",
-  projectId: "sann-contabil",
-  storageBucket: "sann-contabil.firebasestorage.app",
-  messagingSenderId: "274607015375",
-  appId: "1:274607015375:web:1dd3df83e43e8e09dd7eba",
-  measurementId: "G-WGPJ8QEW55"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
+
+// Validate config
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'undefined') {
+  throw new Error('Firebase API Key is missing. Please check your environment variables.');
+}
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);

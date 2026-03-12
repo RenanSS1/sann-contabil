@@ -1,6 +1,7 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import { PlusSquare, Save } from 'lucide-react';
 import { NewEntry, Account } from '../types';
+import { AccountCombobox } from './AccountCombobox';
 
 interface EntryFormProps {
   onSubmit: (entry: NewEntry) => void;
@@ -11,9 +12,13 @@ interface EntryFormProps {
 export function EntryForm({ onSubmit, userId, accounts }: EntryFormProps) {
   const [dataStr, setDataStr] = useState('');
   const [valorStr, setValorStr] = useState('');
-  const [contaDebito, setContaDebito] = useState('');
-  const [contaCredito, setContaCredito] = useState('');
+  const [contaDebito, setContaDebito] = useState<Account | null>(null);
+  const [contaCredito, setContaCredito] = useState<Account | null>(null);
   const [descricao, setDescricao] = useState('');
+
+  const contaDebitoRef = useRef<HTMLInputElement>(null);
+  const contaCreditoRef = useRef<HTMLInputElement>(null);
+  const descricaoRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -28,8 +33,10 @@ export function EntryForm({ onSubmit, userId, accounts }: EntryFormProps) {
     onSubmit({
       data: dateObj,
       valor: numericValue,
-      contaDebito,
-      contaCredito,
+      contaDebito: contaDebito.id,
+      contaDebitoInfo: { id: contaDebito.id, codigo: contaDebito.codigo, nome: contaDebito.nome },
+      contaCredito: contaCredito.id,
+      contaCreditoInfo: { id: contaCredito.id, codigo: contaCredito.codigo, nome: contaCredito.nome },
       descricao,
       criadoPor: userId,
     });
@@ -37,8 +44,8 @@ export function EntryForm({ onSubmit, userId, accounts }: EntryFormProps) {
     // Reset form
     setDataStr('');
     setValorStr('');
-    setContaDebito('');
-    setContaCredito('');
+    setContaDebito(null);
+    setContaCredito(null);
     setDescricao('');
   };
 
@@ -76,40 +83,29 @@ export function EntryForm({ onSubmit, userId, accounts }: EntryFormProps) {
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Conta Débito</label>
-            <select
-              required
-              value={contaDebito}
-              onChange={(e) => setContaDebito(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
-            >
-              <option value="" disabled>Selecione a conta...</option>
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.codigo} - {acc.nome}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Conta Crédito</label>
-            <select
-              required
-              value={contaCredito}
-              onChange={(e) => setContaCredito(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none"
-            >
-              <option value="" disabled>Selecione a conta...</option>
-              {accounts.map((acc) => (
-                <option key={acc.id} value={acc.id}>{acc.codigo} - {acc.nome}</option>
-              ))}
-            </select>
-          </div>
+          <AccountCombobox 
+            ref={contaDebitoRef}
+            nextInputRef={contaCreditoRef}
+            accounts={accounts} 
+            selectedAccountId={contaDebito?.id || ''} 
+            onSelect={setContaDebito}
+            label="Conta Débito"
+          />
+          <AccountCombobox 
+            ref={contaCreditoRef}
+            nextInputRef={descricaoRef}
+            accounts={accounts} 
+            selectedAccountId={contaCredito?.id || ''} 
+            onSelect={setContaCredito}
+            label="Conta Crédito"
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-end">
           <div className="lg:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
             <input
+              ref={descricaoRef}
               type="text"
               required
               placeholder="Descreva a operação..."
